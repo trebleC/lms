@@ -1,0 +1,1 @@
+import{r as t}from"./index-Bd4y8G8I.js";function n(e){return t({url:"/lend_list/add",method:"post",data:e})}function i(e){return t({url:`/lend_list/delete/${e}`,method:"delete"})}function r(e){return t({url:"/lend_list/edit",method:"put",data:e})}function l(e){return t({url:"/lend_list/list",method:"get",params:e})}export{n as c,i as d,l as g,r as u};

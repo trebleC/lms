@@ -1,0 +1,79 @@
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: book_mysql
+    hostname: book_db
+    platform: linux/amd64
+    restart: always
+    environment:
+      MYSQL_DATABASE: lms_api
+      MYSQL_ROOT_PASSWORD: example
+      TZ: Asia/Shanghai
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d
+      - lms_mysql_data:/var/lib/mysql
+    ports:
+      - "3320:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost",'-uroot','-pexample']
+      timeout: 5s
+      retries: 10
+    networks:
+      - book_network
+    # command:
+    #   --max_connections=1000
+    #   --character-set-server=utf8mb4
+    #   --collation-server=utf8mb4_general_ci
+    #   --default-authentication-plugin=mysql_native_password 
+
+  egg:
+    build:
+      context: ./egg-api
+      dockerfile: Dockerfile
+    container_name: egg_api
+    hostname: egg_server
+    restart: always
+    privileged: true 
+    ports:
+      - "7021:7001"
+    networks:
+      - book_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: book_nginx
+    privileged: true 
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./react-h5/dist:/usr/src/app/fe/h5
+      - ./vue3-admin/dist:/usr/src/app/fe/admin
+      # - ./nuxt-tomatoes/dist:/usr/src/app/fe/tomatoes
+    ports:
+      - "8094:80"
+    networks:
+      - book_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # nuxt-tomatoes:
+  #   build:
+  #     context: ./nuxt-tomatoes
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   ports:
+  #       - 10200:10200
+  #   container_name: nuxt-tomatoes
+  #   hostname: nuxt_tomatoes
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+
+volumes:
+  lms_mysql_data:
+networks:
+  book_network:
+    driver: bridge
